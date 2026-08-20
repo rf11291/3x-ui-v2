@@ -25,7 +25,7 @@ Como una versión mejorada del proyecto X-UI original, 3X-UI proporciona mayor e
 ## Inicio Rápido
 
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/rf11291/3x-ui-v2/main/install.sh)
 ```
 
 Para documentación completa, visita la [Wiki del proyecto](https://github.com/MHSanaei/3x-ui/wiki).
@@ -51,7 +51,3 @@ Para documentación completa, visita la [Wiki del proyecto](https://github.com/M
 <a href="https://nowpayments.io/donation/hsanaei" target="_blank" rel="noreferrer noopener">
    <img src="./media/donation-button-black.svg" alt="Crypto donation button by NOWPayments">
 </a>
-
-## Estrellas a lo Largo del Tiempo
-
-[![Stargazers over time](https://starchart.cc/MHSanaei/3x-ui.svg?variant=adaptive)](https://starchart.cc/MHSanaei/3x-ui)

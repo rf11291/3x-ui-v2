@@ -25,7 +25,7 @@ As an enhanced fork of the original X-UI project, 3X-UI provides improved stabil
 ## Quick Start
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/rf11291/3x-ui-v2/main/install.sh)
 ```
 
 For full documentation, please visit the [project Wiki](https://github.com/MHSanaei/3x-ui/wiki).
@@ -51,7 +51,3 @@ For full documentation, please visit the [project Wiki](https://github.com/MHSan
 <a href="https://nowpayments.io/donation/hsanaei" target="_blank" rel="noreferrer noopener">
    <img src="./media/donation-button-black.svg" alt="Crypto donation button by NOWPayments">
 </a>
-
-## Stargazers over Time
-
-[![Stargazers over time](https://starchart.cc/MHSanaei/3x-ui.svg?variant=adaptive)](https://starchart.cc/MHSanaei/3x-ui)
