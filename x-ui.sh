@@ -72,6 +72,17 @@ os_version=$(grep "^VERSION_ID" /etc/os-release | cut -d '=' -f2 | tr -d '"' | t
 # Declare Variables
 xui_folder="${XUI_MAIN_FOLDER:=/usr/local/x-ui}"
 xui_service="${XUI_SERVICE:=/etc/systemd/system}"
+
+github_repo="${XUI_GITHUB_REPO:-rf11291/3x-ui-v2}"
+github_version="${XUI_VERSION:-v2.9.4}"
+github_ref="${XUI_GITHUB_REF:-main}"
+github_raw_url="https://raw.githubusercontent.com/${github_repo}/${github_ref}"
+github_auth_args=()
+[[ -n "${XUI_GITHUB_TOKEN:-}" ]] && github_auth_args=(-H "Authorization: Bearer ${XUI_GITHUB_TOKEN}")
+
+github_curl() {
+    curl "${github_auth_args[@]}" "$@"
+}
 log_folder="${XUI_LOG_FOLDER:=/var/log/x-ui}"
 mkdir -p "${log_folder}"
 iplimit_log_path="${log_folder}/3xipl.log"
@@ -108,7 +119,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/MHSanaei/3x-ui/main/install.sh)
+    bash <(github_curl -Ls "${github_raw_url}/install.sh")
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -127,7 +138,7 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/MHSanaei/3x-ui/main/update.sh)
+    bash <(github_curl -Ls "${github_raw_url}/update.sh")
     if [[ $? == 0 ]]; then
         LOGI "Update is complete, Panel has automatically restarted "
         before_show_menu
@@ -145,7 +156,7 @@ update_menu() {
         return 0
     fi
 
-    curl -fLRo /usr/bin/x-ui https://raw.githubusercontent.com/MHSanaei/3x-ui/main/x-ui.sh
+    github_curl -fLRo /usr/bin/x-ui "${github_raw_url}/x-ui.sh"
     chmod +x ${xui_folder}/x-ui.sh
     chmod +x /usr/bin/x-ui
 
@@ -166,8 +177,8 @@ legacy_version() {
         echo "Panel version cannot be empty. Exiting."
         exit 1
     fi
-    # Use the entered panel version in the download link
-    install_command="bash <(curl -Ls "https://raw.githubusercontent.com/mhsanaei/3x-ui/v$tag_version/install.sh") v$tag_version"
+    # This distribution is pinned to the repository release configured above.
+    install_command="bash <(github_curl -Ls \"${github_raw_url}/install.sh\")"
 
     echo "Downloading and installing panel version $tag_version..."
     eval $install_command
@@ -206,7 +217,7 @@ uninstall() {
     echo ""
     echo -e "Uninstalled Successfully.\n"
     echo "If you need to install this panel again, you can use below command:"
-    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)${plain}"
+    echo -e "${green}bash <(curl -Ls ${github_raw_url}/install.sh)${plain}"
     echo ""
     # Trap the SIGTERM signal
     trap delete_script SIGTERM
@@ -604,7 +615,7 @@ enable_bbr() {
 }
 
 update_shell() {
-    curl -fLRo /usr/bin/x-ui -z /usr/bin/x-ui https://github.com/MHSanaei/3x-ui/raw/main/x-ui.sh
+    github_curl -fLRo /usr/bin/x-ui -z /usr/bin/x-ui "${github_raw_url}/x-ui.sh"
     if [[ $? != 0 ]]; then
         echo ""
         LOGE "Failed to download script, Please check whether the machine can connect Github"

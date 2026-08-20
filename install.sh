@@ -11,6 +11,33 @@ cur_dir=$(pwd)
 xui_folder="${XUI_MAIN_FOLDER:=/usr/local/x-ui}"
 xui_service="${XUI_SERVICE:=/etc/systemd/system}"
 
+# This distribution is intentionally pinned to the private reference release.
+# Set XUI_GITHUB_TOKEN to a GitHub token with read access when installing from
+# the private repository. XUI_GITHUB_REPO and XUI_VERSION remain overrideable
+# for a future private release.
+github_repo="${XUI_GITHUB_REPO:-rf11291/3x-ui-v2}"
+github_version="${XUI_VERSION:-v2.9.4}"
+github_ref="${XUI_GITHUB_REF:-main}"
+github_raw_url="https://raw.githubusercontent.com/${github_repo}/${github_ref}"
+github_auth_args=()
+[[ -n "${XUI_GITHUB_TOKEN:-}" ]] && github_auth_args=(-H "Authorization: Bearer ${XUI_GITHUB_TOKEN}")
+
+github_curl() {
+    curl "${github_auth_args[@]}" "$@"
+}
+
+download_release_asset() {
+    local asset_name="$1" output_file="$2" asset_id
+    asset_id=$(github_curl -fsSL "https://api.github.com/repos/${github_repo}/releases/tags/${github_version}" \
+        | awk -v asset="${asset_name}" '
+            /"id": [0-9]+,/ { id=$2; gsub(",", "", id) }
+            $0 ~ "\\\"name\\\": \\\"" asset "\\\"" { print id; exit }
+        ')
+    [[ -n "${asset_id}" ]] || return 1
+    github_curl -4fL --location-trusted -H 'Accept: application/octet-stream' \
+        -o "${output_file}" "https://api.github.com/repos/${github_repo}/releases/assets/${asset_id}"
+}
+
 # check root
 [[ $EUID -ne 0 ]] && echo -e "${red}Fatal error: ${plain} Please run this script with root privilege \n " && exit 1
 
@@ -786,41 +813,14 @@ install_x-ui() {
     cd ${xui_folder%/x-ui}/
 
     # Download resources
-    if [ $# == 0 ]; then
-        tag_version=$(curl -Ls "https://api.github.com/repos/MHSanaei/3x-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-        if [[ ! -n "$tag_version" ]]; then
-            echo -e "${yellow}Trying to fetch version with IPv4...${plain}"
-            tag_version=$(curl -4 -Ls "https://api.github.com/repos/MHSanaei/3x-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-            if [[ ! -n "$tag_version" ]]; then
-                echo -e "${red}Failed to fetch x-ui version, it may be due to GitHub API restrictions, please try it later${plain}"
-                exit 1
-            fi
-        fi
-        echo -e "Got x-ui latest version: ${tag_version}, beginning the installation..."
-        curl -4fLRo ${xui_folder}-linux-$(arch).tar.gz https://github.com/MHSanaei/3x-ui/releases/download/${tag_version}/x-ui-linux-$(arch).tar.gz
-        if [[ $? -ne 0 ]]; then
-            echo -e "${red}Downloading x-ui failed, please be sure that your server can access GitHub ${plain}"
-            exit 1
-        fi
-    else
-        tag_version=$1
-        tag_version_numeric=${tag_version#v}
-        min_version="2.3.5"
-
-        if [[ "$(printf '%s\n' "$min_version" "$tag_version_numeric" | sort -V | head -n1)" != "$min_version" ]]; then
-            echo -e "${red}Please use a newer version (at least v2.3.5). Exiting installation.${plain}"
-            exit 1
-        fi
-
-        url="https://github.com/MHSanaei/3x-ui/releases/download/${tag_version}/x-ui-linux-$(arch).tar.gz"
-        echo -e "Beginning to install x-ui $1"
-        curl -4fLRo ${xui_folder}-linux-$(arch).tar.gz ${url}
-        if [[ $? -ne 0 ]]; then
-            echo -e "${red}Download x-ui $1 failed, please check if the version exists ${plain}"
-            exit 1
-        fi
+    tag_version="${github_version}"
+    echo -e "Installing x-ui ${tag_version} from ${github_repo}..."
+    download_release_asset "x-ui-linux-$(arch).tar.gz" "${xui_folder}-linux-$(arch).tar.gz"
+    if [[ $? -ne 0 ]]; then
+        echo -e "${red}Downloading x-ui failed. For a private repository, set XUI_GITHUB_TOKEN with read access.${plain}"
+        exit 1
     fi
-    curl -4fLRo /usr/bin/x-ui-temp https://raw.githubusercontent.com/MHSanaei/3x-ui/main/x-ui.sh
+    github_curl -4fLRo /usr/bin/x-ui-temp "${github_raw_url}/x-ui.sh"
     if [[ $? -ne 0 ]]; then
         echo -e "${red}Failed to download x-ui.sh${plain}"
         exit 1
@@ -872,7 +872,7 @@ install_x-ui() {
     fi
 
     if [[ $release == "alpine" ]]; then
-        curl -4fLRo /etc/init.d/x-ui https://raw.githubusercontent.com/MHSanaei/3x-ui/main/x-ui.rc
+        github_curl -4fLRo /etc/init.d/x-ui "${github_raw_url}/x-ui.rc"
         if [[ $? -ne 0 ]]; then
             echo -e "${red}Failed to download x-ui.rc${plain}"
             exit 1
@@ -929,13 +929,13 @@ install_x-ui() {
             echo -e "${yellow}Service files not found in tar.gz, downloading from GitHub...${plain}"
             case "${release}" in
                 ubuntu | debian | armbian)
-                    curl -4fLRo ${xui_service}/x-ui.service https://raw.githubusercontent.com/MHSanaei/3x-ui/main/x-ui.service.debian > /dev/null 2>&1
+                    github_curl -4fLRo ${xui_service}/x-ui.service "${github_raw_url}/x-ui.service.debian" > /dev/null 2>&1
                     ;;
                 arch | manjaro | parch)
-                    curl -4fLRo ${xui_service}/x-ui.service https://raw.githubusercontent.com/MHSanaei/3x-ui/main/x-ui.service.arch > /dev/null 2>&1
+                    github_curl -4fLRo ${xui_service}/x-ui.service "${github_raw_url}/x-ui.service.arch" > /dev/null 2>&1
                     ;;
                 *)
-                    curl -4fLRo ${xui_service}/x-ui.service https://raw.githubusercontent.com/MHSanaei/3x-ui/main/x-ui.service.rhel > /dev/null 2>&1
+                    github_curl -4fLRo ${xui_service}/x-ui.service "${github_raw_url}/x-ui.service.rhel" > /dev/null 2>&1
                     ;;
             esac
 

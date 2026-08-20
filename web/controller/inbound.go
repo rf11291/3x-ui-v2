@@ -163,7 +163,7 @@ func (a *InboundController) addInbound(c *gin.Context) {
 	if needRestart {
 		a.xrayService.SetToNeedRestart()
 	}
-	a.broadcastInboundsUpdate(user.Id)
+	go a.broadcastInboundsUpdate(user.Id)
 }
 
 // delInbound deletes an inbound configuration by its ID.
@@ -183,7 +183,7 @@ func (a *InboundController) delInbound(c *gin.Context) {
 		a.xrayService.SetToNeedRestart()
 	}
 	user := session.GetLoginUser(c)
-	a.broadcastInboundsUpdate(user.Id)
+	go a.broadcastInboundsUpdate(user.Id)
 }
 
 // updateInbound updates an existing inbound configuration.
@@ -211,7 +211,7 @@ func (a *InboundController) updateInbound(c *gin.Context) {
 		a.xrayService.SetToNeedRestart()
 	}
 	user := session.GetLoginUser(c)
-	a.broadcastInboundsUpdate(user.Id)
+	go a.broadcastInboundsUpdate(user.Id)
 }
 
 // setInboundEnable flips only the enable flag of an inbound. This is a

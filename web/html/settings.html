@@ -709,8 +709,10 @@
       this.entryPort = window.location.port;
       this.entryProtocol = window.location.protocol;
       this.entryIsIP = this._isIp(this.entryHost);
-      await this.getAllSetting();
-      await this.loadInboundTags();
+      await Promise.all([
+        this.getAllSetting(),
+        this.loadInboundTags(),
+      ]);
       while (true) {
         await PromiseUtil.sleep(1000);
         this.saveBtnDisable = this.oldAllSetting.equals(this.allSetting);

@@ -1136,19 +1136,20 @@
       },
       async getDBInbounds() {
         this.refreshing = true;
-        const msg = await HttpUtil.get('/panel/api/inbounds/list');
-        if (!msg.success) {
+        try {
+          const msg = await HttpUtil.get('/panel/api/inbounds/list');
+          if (!msg.success) {
+            return;
+          }
+
+          await Promise.all([
+            this.getLastOnlineMap(),
+            this.getOnlineUsers(),
+          ]);
+          this.setInbounds(msg.obj);
+        } finally {
           this.refreshing = false;
-          return;
         }
-
-        await this.getLastOnlineMap();
-        await this.getOnlineUsers();
-
-        this.setInbounds(msg.obj);
-        setTimeout(() => {
-          this.refreshing = false;
-        }, 500);
       },
       async getOnlineUsers() {
         const msg = await HttpUtil.post('/panel/api/inbounds/onlines');

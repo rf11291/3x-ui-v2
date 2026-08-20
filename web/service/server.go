@@ -102,19 +102,21 @@ type Release struct {
 // ServerService provides business logic for server monitoring and management.
 // It handles system status collection, IP detection, and application statistics.
 type ServerService struct {
-	xrayService        XrayService
-	inboundService     InboundService
-	cachedIPv4         string
-	cachedIPv6         string
-	noIPv6             bool
-	mu                 sync.Mutex
-	lastCPUTimes       cpu.TimesStat
-	hasLastCPUSample   bool
-	hasNativeCPUSample bool
-	emaCPU             float64
-	cpuHistory         []CPUSample
-	cachedCpuSpeedMhz  float64
-	lastCpuInfoAttempt time.Time
+	xrayService           XrayService
+	inboundService        InboundService
+	cachedIPv4            string
+	cachedIPv6            string
+	publicIPMu            sync.RWMutex
+	publicIPLookupStarted bool
+	cpuInfoMu             sync.RWMutex
+	mu                    sync.Mutex
+	lastCPUTimes          cpu.TimesStat
+	hasLastCPUSample      bool
+	hasNativeCPUSample    bool
+	emaCPU                float64
+	cpuHistory            []CPUSample
+	cachedCpuSpeedMhz     float64
+	lastCpuInfoAttempt    time.Time
 }
 
 // AggregateCpuHistory returns up to maxPoints averaged buckets of size bucketSeconds over recent data.
@@ -225,6 +227,62 @@ func getPublicIP(url string) string {
 	return ipString
 }
 
+var publicIPv4Services = []string{
+	"https://api4.ipify.org",
+	"https://ipv4.icanhazip.com",
+	"https://v4.api.ipinfo.io/ip",
+	"https://ipv4.myexternalip.com/raw",
+	"https://4.ident.me",
+	"https://check-host.net/ip",
+}
+
+var publicIPv6Services = []string{
+	"https://api6.ipify.org",
+	"https://ipv6.icanhazip.com",
+	"https://v6.api.ipinfo.io/ip",
+	"https://ipv6.myexternalip.com/raw",
+	"https://6.ident.me",
+}
+
+// startPublicIPLookup avoids blocking the status endpoint on external network
+// calls. The result is picked up by the next two-second status broadcast.
+func (s *ServerService) startPublicIPLookup() {
+	s.publicIPMu.Lock()
+	if s.publicIPLookupStarted {
+		s.publicIPMu.Unlock()
+		return
+	}
+	s.publicIPLookupStarted = true
+	s.publicIPMu.Unlock()
+
+	go func() {
+		ipv4, ipv6 := "N/A", "N/A"
+		for _, endpoint := range publicIPv4Services {
+			ipv4 = getPublicIP(endpoint)
+			if ipv4 != "N/A" {
+				break
+			}
+		}
+		for _, endpoint := range publicIPv6Services {
+			ipv6 = getPublicIP(endpoint)
+			if ipv6 != "N/A" {
+				break
+			}
+		}
+
+		s.publicIPMu.Lock()
+		s.cachedIPv4 = ipv4
+		s.cachedIPv6 = ipv6
+		s.publicIPMu.Unlock()
+	}()
+}
+
+func (s *ServerService) publicIPs() (string, string) {
+	s.publicIPMu.RLock()
+	defer s.publicIPMu.RUnlock()
+	return s.cachedIPv4, s.cachedIPv6
+}
+
 func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 	now := time.Now()
 	status := &Status{
@@ -246,30 +304,30 @@ func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 
 	status.LogicalPro = runtime.NumCPU()
 
-	if status.CpuSpeedMhz = s.cachedCpuSpeedMhz; s.cachedCpuSpeedMhz == 0 && time.Since(s.lastCpuInfoAttempt) > 5*time.Minute {
+	// CPU frequency discovery can be slow on virtualized hosts. Start it in
+	// the background so the initial status response is never blocked.
+	s.cpuInfoMu.Lock()
+	status.CpuSpeedMhz = s.cachedCpuSpeedMhz
+	shouldLookupCPU := s.cachedCpuSpeedMhz == 0 && time.Since(s.lastCpuInfoAttempt) > 5*time.Minute
+	if shouldLookupCPU {
 		s.lastCpuInfoAttempt = time.Now()
-		done := make(chan struct{})
+	}
+	s.cpuInfoMu.Unlock()
+	if shouldLookupCPU {
 		go func() {
-			defer close(done)
 			cpuInfos, err := cpu.Info()
 			if err != nil {
 				logger.Warning("get cpu info failed:", err)
 				return
 			}
-			if len(cpuInfos) > 0 {
-				s.cachedCpuSpeedMhz = cpuInfos[0].Mhz
-				status.CpuSpeedMhz = s.cachedCpuSpeedMhz
-			} else {
+			if len(cpuInfos) == 0 {
 				logger.Warning("could not find cpu info")
+				return
 			}
+			s.cpuInfoMu.Lock()
+			s.cachedCpuSpeedMhz = cpuInfos[0].Mhz
+			s.cpuInfoMu.Unlock()
 		}()
-		select {
-		case <-done:
-		case <-time.After(1500 * time.Millisecond):
-			logger.Warning("cpu info query timed out; will retry later")
-		}
-	} else if s.cachedCpuSpeedMhz != 0 {
-		status.CpuSpeedMhz = s.cachedCpuSpeedMhz
 	}
 
 	// Uptime
@@ -346,47 +404,9 @@ func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 		logger.Warning("get udp connections failed:", err)
 	}
 
-	// IP fetching with caching
-	showIp4ServiceLists := []string{
-		"https://api4.ipify.org",
-		"https://ipv4.icanhazip.com",
-		"https://v4.api.ipinfo.io/ip",
-		"https://ipv4.myexternalip.com/raw",
-		"https://4.ident.me",
-		"https://check-host.net/ip",
-	}
-	showIp6ServiceLists := []string{
-		"https://api6.ipify.org",
-		"https://ipv6.icanhazip.com",
-		"https://v6.api.ipinfo.io/ip",
-		"https://ipv6.myexternalip.com/raw",
-		"https://6.ident.me",
-	}
-
-	if s.cachedIPv4 == "" {
-		for _, ip4Service := range showIp4ServiceLists {
-			s.cachedIPv4 = getPublicIP(ip4Service)
-			if s.cachedIPv4 != "N/A" {
-				break
-			}
-		}
-	}
-
-	if s.cachedIPv6 == "" && !s.noIPv6 {
-		for _, ip6Service := range showIp6ServiceLists {
-			s.cachedIPv6 = getPublicIP(ip6Service)
-			if s.cachedIPv6 != "N/A" {
-				break
-			}
-		}
-	}
-
-	if s.cachedIPv6 == "N/A" {
-		s.noIPv6 = true
-	}
-
-	status.PublicIP.IPv4 = s.cachedIPv4
-	status.PublicIP.IPv6 = s.cachedIPv6
+	// Start external IP discovery without delaying this status response.
+	s.startPublicIPLookup()
+	status.PublicIP.IPv4, status.PublicIP.IPv6 = s.publicIPs()
 
 	// Xray status
 	if s.xrayService.IsXrayRunning() {
