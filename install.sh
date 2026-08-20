@@ -16,7 +16,7 @@ xui_service="${XUI_SERVICE:=/etc/systemd/system}"
 # the private repository. XUI_GITHUB_REPO and XUI_VERSION remain overrideable
 # for a future private release.
 github_repo="${XUI_GITHUB_REPO:-rf11291/3x-ui-v2}"
-github_version="${XUI_VERSION:-v2.9.4}"
+github_version="${XUI_VERSION:-v2.9.5}"
 github_ref="${XUI_GITHUB_REF:-main}"
 github_raw_url="https://raw.githubusercontent.com/${github_repo}/${github_ref}"
 github_auth_args=()
