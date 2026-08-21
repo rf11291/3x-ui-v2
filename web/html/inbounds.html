@@ -396,7 +396,7 @@
                             </tr>
                           </table>
                         </template>
-                        <a-tag
+                        <a-tag class="inbound-traffic-tag"
                           :color="ColorUtils.usageColor(dbInbound.up + dbInbound.down, app.trafficDiff, dbInbound.total)">
                           [[ SizeFormatter.sizeFormat(dbInbound.up +
                           dbInbound.down) ]] /
@@ -585,7 +585,7 @@
                                       </tr>
                                     </table>
                                   </template>
-                                  <a-tag
+                                  <a-tag class="inbound-traffic-tag"
                                     :color="ColorUtils.usageColor(dbInbound.up + dbInbound.down, app.trafficDiff, dbInbound.total)">
                                     [[ SizeFormatter.sizeFormat(dbInbound.up +
                                     dbInbound.down) ]] /
@@ -898,64 +898,64 @@
     title: "ID",
     align: 'right',
     dataIndex: "id",
-    width: 30,
+    width: 40,
     responsive: ["xs"],
   }, {
     title: '{{ i18n "pages.inbounds.operate" }}',
     align: 'center',
-    width: 30,
+    width: 48,
     scopedSlots: {
       customRender: 'action'
     },
   }, {
     title: '{{ i18n "pages.inbounds.enable" }}',
     align: 'center',
-    width: 35,
+    width: 52,
     scopedSlots: {
       customRender: 'enable'
     },
   }, {
     title: '{{ i18n "pages.inbounds.remark" }}',
     align: 'center',
-    width: 60,
+    width: 100,
     dataIndex: "remark",
   }, {
     title: '{{ i18n "pages.inbounds.port" }}',
     align: 'center',
     dataIndex: "port",
-    width: 40,
+    width: 56,
   }, {
     title: '{{ i18n "pages.inbounds.protocol" }}',
     align: 'left',
-    width: 70,
+    width: 90,
     scopedSlots: {
       customRender: 'protocol'
     },
   }, {
     title: '{{ i18n "clients" }}',
     align: 'left',
-    width: 50,
+    width: 64,
     scopedSlots: {
       customRender: 'clients'
     },
   }, {
     title: '{{ i18n "pages.inbounds.traffic" }}',
     align: 'center',
-    width: 90,
+    width: 220,
     scopedSlots: {
       customRender: 'traffic'
     },
   }, {
     title: '{{ i18n "pages.inbounds.allTimeTraffic" }}',
     align: 'center',
-    width: 60,
+    width: 110,
     scopedSlots: {
       customRender: 'allTimeInbound'
     },
   }, {
     title: '{{ i18n "pages.inbounds.expireDate" }}',
     align: 'center',
-    width: 40,
+    width: 100,
     scopedSlots: {
       customRender: 'expiryTime'
     },
@@ -989,13 +989,13 @@
   }];
 
   const innerColumns = [
-    { title: '{{ i18n "pages.inbounds.operate" }}', width: 140, scopedSlots: { customRender: 'actions' } },
-    { title: '{{ i18n "pages.inbounds.enable" }}', width: 60, scopedSlots: { customRender: 'enable' } },
-    { title: '{{ i18n "online" }}', width: 80, scopedSlots: { customRender: 'online' } },
-    { title: '{{ i18n "pages.inbounds.client" }}', width: 160, scopedSlots: { customRender: 'client' } },
-    { title: '{{ i18n "pages.inbounds.traffic" }}', width: 200, align: 'center', scopedSlots: { customRender: 'traffic' } },
-    { title: '{{ i18n "pages.inbounds.allTimeTraffic" }}', width: 110, align: 'center', scopedSlots: { customRender: 'allTime' } },
-    { title: '{{ i18n "pages.inbounds.expireDate" }}', width: 180, align: 'center', scopedSlots: { customRender: 'expiryTime' } },
+    { title: '{{ i18n "pages.inbounds.operate" }}', width: 96, scopedSlots: { customRender: 'actions' } },
+    { title: '{{ i18n "pages.inbounds.enable" }}', width: 56, scopedSlots: { customRender: 'enable' } },
+    { title: '{{ i18n "online" }}', width: 64, scopedSlots: { customRender: 'online' } },
+    { title: '{{ i18n "pages.inbounds.client" }}', width: 150, scopedSlots: { customRender: 'client' } },
+    { title: '{{ i18n "pages.inbounds.traffic" }}', width: 250, align: 'center', scopedSlots: { customRender: 'traffic' } },
+    { title: '{{ i18n "pages.inbounds.allTimeTraffic" }}', width: 120, align: 'center', scopedSlots: { customRender: 'allTime' } },
+    { title: '{{ i18n "pages.inbounds.expireDate" }}', width: 150, align: 'center', scopedSlots: { customRender: 'expiryTime' } },
   ];
 
   const innerMobileColumns = [{
@@ -2267,6 +2267,16 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* Keep the used/limit value together so the traffic column can use its
+     allocated width instead of wrapping the value into multiple lines. */
+  .inbounds-page .inbound-traffic-tag {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
   }
 
   /* Traffic / expiry cell — flex layout:
