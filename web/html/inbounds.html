@@ -2280,9 +2280,9 @@
   }
 
   /* Traffic / expiry cell — flex layout:
-     - Side text (.tr-table-rt / .tr-table-lt) gets a stable readable width.
-     - Progress bar (.tr-table-bar) stays compact instead of consuming the
-       entire traffic column when the table has extra horizontal space.
+     - The three regions share the available column width proportionally.
+     - Each region can shrink safely, so narrow tables keep their boundaries.
+     - The progress bar uses the remaining width instead of a fixed pixel size.
      A flex <div> replaces the previous <table>/<tr>/<td> hack — table layout
      ignored width: 100% on the row, so the row grew to its content width and
      pushed past the a-table column boundary. */
@@ -2295,32 +2295,27 @@
     box-sizing: border-box;
     min-height: 18px;
   }
-  /* Fixed widths so the bar starts/ends at the same X position across all
-     rows — without this, "126.45 MB" and "0 B" pushed the bar to different
-     spots, which read as misalignment in the column. */
+  /* Proportional flex factors keep the bar useful at both narrow and wide
+     column sizes while the text regions retain their relative priority. */
   .inbounds-page .tr-table-rt,
   .inbounds-page .tr-table-lt {
-    flex: 0 0 auto;
+    min-width: 0;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .inbounds-page .tr-table-rt {
+    flex: 1.25 1 0;
     text-align: end;
-    flex-basis: 78px;
-    min-width: 78px;
   }
   .inbounds-page .tr-table-lt {
+    flex: 0.75 1 0;
     text-align: start;
-    flex-basis: 38px;
-    min-width: 38px;
   }
   .inbounds-page .tr-table-bar {
-    flex: 0 1 64px;
-    width: 64px;
-    max-width: 64px;
-    min-width: 36px;
+    flex: 1.5 1 0;
+    min-width: 0;
     overflow: hidden;
     display: block;
     line-height: 1;
