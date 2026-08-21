@@ -1870,19 +1870,25 @@
         let clientStats = this.getClientStats(dbInbound, email);
         return ColorUtils.clientUsageColor(clientStats, app.trafficDiff)
       },
+      progressPercent(value) {
+        const percent = Number(value);
+        if (!Number.isFinite(percent)) return 0;
+        return Math.min(100, Math.max(0, percent));
+      },
       statsProgress(dbInbound, email) {
         if (!email || email.length == 0) return 100;
         let clientStats = this.getClientStats(dbInbound, email);
         if (!clientStats) return 0;
         if (clientStats.total == 0) return 100;
-        return 100 * (clientStats.down + clientStats.up) / clientStats.total;
+        return this.progressPercent(100 * (clientStats.down + clientStats.up) / clientStats.total);
       },
       expireProgress(expTime, reset) {
-        now = new Date().getTime();
-        remainedSeconds = expTime < 0 ? -expTime / 1000 : (expTime - now) / 1000;
-        resetSeconds = reset * 86400;
+        const now = new Date().getTime();
+        const remainedSeconds = expTime < 0 ? -expTime / 1000 : (expTime - now) / 1000;
+        const resetSeconds = reset * 86400;
+        if (!Number.isFinite(resetSeconds) || resetSeconds <= 0) return 0;
         if (remainedSeconds >= resetSeconds) return 0;
-        return 100 * (1 - (remainedSeconds / resetSeconds));
+        return this.progressPercent(100 * (1 - (remainedSeconds / resetSeconds)));
       },
       statsExpColor(dbInbound, email) {
         if (!email || email.length == 0) return '#7a316f';
@@ -2244,18 +2250,23 @@
     }
   }
 
-  /* Protocol cell — wrap tags into a flex grid with consistent gap so
-     vless/xhttp/Reality line up cleanly instead of stacking awkwardly. */
+  /* Protocol cell — wrap tags with a consistent gap while keeping the cell
+     from forcing the parent table wider on narrow screens. */
   .inbounds-page .protocol-tags {
-    display: inline-flex;
+    display: flex;
     flex-wrap: wrap;
     gap: 4px;
     align-items: center;
     max-width: 100%;
+    min-width: 0;
   }
   .inbounds-page .protocol-tags .ant-tag {
     margin: 0;
     line-height: 20px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* Traffic / expiry cell — flex layout:
@@ -2268,14 +2279,12 @@
      pushed past the a-table column boundary. */
   .inbounds-page .tr-table-box {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
-    padding: 2px 10px;
-    border-radius: 100px;
-    background: rgba(255, 255, 255, 0.04);
+    min-height: 18px;
   }
   /* Fixed widths so the bar starts/ends at the same X position across all
      rows — without this, "126.45 MB" and "0 B" pushed the bar to different
@@ -2303,6 +2312,7 @@
     min-width: 0;
     overflow: hidden;
     display: block;
+    line-height: 1;
   }
 
   /* Make the progress widget fill its flex cell, and align the inner fill
@@ -2315,6 +2325,7 @@
     width: 100%;
     margin: 0;
     padding: 0;
+    height: 8px;
   }
   .inbounds-page .infinite-bar .ant-progress-inner,
   .inbounds-page .tr-table-bar .ant-progress-inner {
