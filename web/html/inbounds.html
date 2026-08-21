@@ -2280,10 +2280,9 @@
   }
 
   /* Traffic / expiry cell — flex layout:
-     - Side text (.tr-table-rt / .tr-table-lt) sizes to content.
-     - Progress bar (.tr-table-bar) takes whatever's left and is allowed to
-       shrink (min-width: 0) so the cell never visually overflows its column,
-       no matter how long the surrounding values are ("999.99 GB", "365d").
+     - Side text (.tr-table-rt / .tr-table-lt) gets a stable readable width.
+     - Progress bar (.tr-table-bar) stays compact instead of consuming the
+       entire traffic column when the table has extra horizontal space.
      A flex <div> replaces the previous <table>/<tr>/<td> hack — table layout
      ignored width: 100% on the row, so the row grew to its content width and
      pushed past the a-table column boundary. */
@@ -2309,17 +2308,19 @@
   }
   .inbounds-page .tr-table-rt {
     text-align: end;
-    flex-basis: 70px;
-    min-width: 70px;
+    flex-basis: 78px;
+    min-width: 78px;
   }
   .inbounds-page .tr-table-lt {
     text-align: start;
-    flex-basis: 28px;
-    min-width: 28px;
+    flex-basis: 38px;
+    min-width: 38px;
   }
   .inbounds-page .tr-table-bar {
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 0 1 64px;
+    width: 64px;
+    max-width: 64px;
+    min-width: 36px;
     overflow: hidden;
     display: block;
     line-height: 1;
