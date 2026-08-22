@@ -1,5 +1,5 @@
 {{define "modals/dnsPresetsModal"}}
-<a-modal id="dnsPresets-modal" v-model="dnsPresetsModal.visible" :title="dnsPresetsModal.title" :closable="true"
+<a-modal id="dnsPresets-modal" v-cloak v-model="dnsPresetsModal.visible" :title="dnsPresetsModal.title" :closable="true"
   :mask-closable="false" :footer="null" :class="themeSwitcher.currentTheme">
   <a-list class="ant-dns-presets-list" bordered :style="{ width: '100%' }">
     <a-list-item v-for="dns in dnsPresetsDatabase" :style="{ padding: '12px 16px' }">

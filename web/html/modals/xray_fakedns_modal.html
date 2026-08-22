@@ -1,5 +1,5 @@
 {{define "modals/fakednsModal"}}
-<a-modal id="fakedns-modal" v-model="fakednsModal.visible" :title="fakednsModal.title" @ok="fakednsModal.ok"
+<a-modal id="fakedns-modal" v-cloak v-model="fakednsModal.visible" :title="fakednsModal.title" @ok="fakednsModal.ok"
   :closable="true" :mask-closable="false" :ok-text="fakednsModal.okText" cancel-text='{{ i18n "close" }}'
   :class="themeSwitcher.currentTheme">
   <a-form :colon="false" :label-col="{ md: {span:8} }" :wrapper-col="{ md: {span:14} }">

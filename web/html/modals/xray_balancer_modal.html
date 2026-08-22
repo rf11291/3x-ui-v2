@@ -1,5 +1,5 @@
 {{define "modals/balancerModal"}}
-<a-modal id="balancer-modal" v-model="balancerModal.visible" :title="balancerModal.title" @ok="balancerModal.ok"
+<a-modal id="balancer-modal" v-cloak v-model="balancerModal.visible" :title="balancerModal.title" @ok="balancerModal.ok"
     :confirm-loading="balancerModal.confirmLoading" :ok-button-props="{ props: { disabled: !balancerModal.isValid } }"
     :closable="true" :mask-closable="false" :ok-text="balancerModal.okText" cancel-text='{{ i18n "close" }}'
     :class="themeSwitcher.currentTheme">

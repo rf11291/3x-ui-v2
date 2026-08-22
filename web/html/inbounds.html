@@ -679,7 +679,7 @@
 {{template "modals/inboundInfoModal" .}}
 {{template "modals/clientsModal" .}}
 {{template "modals/clientsBulkModal" .}}
-<a-modal id="copy-clients-modal" :title="copyClientsModal.title" :visible="copyClientsModal.visible"
+<a-modal id="copy-clients-modal" v-cloak :title="copyClientsModal.title" :visible="copyClientsModal.visible"
   :confirm-loading="copyClientsModal.confirmLoading" ok-text='{{ i18n "pages.client.copySelected" }}'
   cancel-text='{{ i18n "close" }}' :class="themeSwitcher.currentTheme" :closable="true" :mask-closable="false"
   @ok="() => copyClientsModal.ok()" @cancel="() => copyClientsModal.close()" width="900px">

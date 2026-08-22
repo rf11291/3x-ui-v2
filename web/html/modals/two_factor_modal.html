@@ -1,5 +1,5 @@
 {{define "modals/twoFactorModal"}}
-<a-modal id="two-factor-modal" v-model="twoFactorModal.visible" :title="twoFactorModal.title" :closable="true"
+<a-modal id="two-factor-modal" v-cloak v-model="twoFactorModal.visible" :title="twoFactorModal.title" :closable="true"
     :class="themeSwitcher.currentTheme">
     <template v-if="twoFactorModal.type === 'set'">
         <p>{{ i18n "pages.settings.security.twoFactorModalSteps" }}</p>

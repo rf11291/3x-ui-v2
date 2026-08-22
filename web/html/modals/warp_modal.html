@@ -1,5 +1,5 @@
 {{define "modals/warpModal"}}
-<a-modal id="warp-modal" v-model="warpModal.visible" title="Cloudflare WARP" :confirm-loading="warpModal.confirmLoading"
+<a-modal id="warp-modal" v-cloak v-model="warpModal.visible" title="Cloudflare WARP" :confirm-loading="warpModal.confirmLoading"
     :closable="true" :mask-closable="true" :footer="null" :class="themeSwitcher.currentTheme">
     <template v-if="ObjectUtil.isEmpty(warpModal.warpData)">
         <a-button icon="api" @click="register" :loading="warpModal.confirmLoading">{{ i18n "create" }}</a-button>

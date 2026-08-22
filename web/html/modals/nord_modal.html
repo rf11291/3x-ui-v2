@@ -1,5 +1,5 @@
 {{define "modals/nordModal"}}
-<a-modal id="nord-modal" v-model="nordModal.visible" title="NordVPN NordLynx"
+<a-modal id="nord-modal" v-cloak v-model="nordModal.visible" title="NordVPN NordLynx"
     :confirm-loading="nordModal.confirmLoading" :closable="true" :mask-closable="true" :footer="null"
     :class="themeSwitcher.currentTheme">
     <template v-if="nordModal.nordData == null">

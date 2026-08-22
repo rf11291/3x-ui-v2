@@ -1,5 +1,5 @@
 {{define "modals/clientsBulkModal"}}
-<a-modal id="client-bulk-modal" v-model="clientsBulkModal.visible" :title="clientsBulkModal.title"
+<a-modal id="client-bulk-modal" v-cloak v-model="clientsBulkModal.visible" :title="clientsBulkModal.title"
     @ok="clientsBulkModal.ok" :confirm-loading="clientsBulkModal.confirmLoading" :closable="true" :mask-closable="false"
     :ok-text="clientsBulkModal.okText" cancel-text='{{ i18n "close" }}' :class="themeSwitcher.currentTheme">
     <a-form :colon="false" :label-col="{ md: {span:8} }" :wrapper-col="{ md: {span:14} }">
